@@ -35,13 +35,6 @@ def divided_differences(x, y):
 def print_divided_diff_table(x, y, dd):
     n = len(x)
     print("  Divided Diff table")
-
-    header = f"  {'x':>8}  {'f(x)':>10}"
-    for k in range(1, n):
-        header += f"  {'f[x₀..x' + str(k) + ']':>16}"
-    print(header)
-
-
     for i in range(n):
         row = f"  {x[i]:>8.1f}  {y[i]:>10.4f}"
         for j in range(1, n - i):
@@ -69,7 +62,6 @@ def newton_interpolate(x_nodes, y_nodes, t):
 
 
 def newton_interpolate_vec(x_nodes, y_nodes, t_vals):
-    """Векторна версія: обчислює P(t) для масиву значень."""
     return np.array([newton_interpolate(x_nodes, y_nodes, t) for t in t_vals])
 
 
@@ -200,9 +192,6 @@ def plot_error_analysis(x_data, y_data):
     ]
 
     fig, axes = plt.subplots(1, 2, figsize=(14, 5.5))
-    fig.suptitle('Аналіз похибки інтерполяції\n'
-                 '|P_k(x) − P₅(x)| — відхилення від варіанту з 5 вузлами',
-                 fontsize=12, fontweight='bold')
 
     configs = [
         (axes[0], newton_interpolate_vec,    full_n, 'Newton'),
@@ -298,7 +287,7 @@ def plot_runge_effect(x_base, y_base):
     axes[0].legend(fontsize=9)
     axes[0].grid(True, alpha=0.25)
 
-    axes[1].set_title('Відхилення від еталону (5 вузлів)', fontsize=12, fontweight='bold')
+    axes[1].set_title('Deviation from 5', fontsize=12, fontweight='bold')
     axes[1].set_xlabel('RPS', fontsize=11)
     axes[1].set_ylabel('Error (%)', fontsize=11)
     axes[1].legend(fontsize=9)
@@ -313,7 +302,6 @@ def write_extended_csv(x_base, y_base, out_dir):
         xn, yn = generate_extended_data(x_base, y_base, n)
         path = f'{out_dir}/data_{n}_nodes.csv'
         write_data(path, xn, yn)
-        print(f"  Generated {n} nodes - {path}")
 
 
 def main():
@@ -363,13 +351,12 @@ def main():
         pf = factorial_interpolate(xn, yn, target)
         print(f"  {'Newton':<22} {label:<20} {pn:<12.4f} {abs(pn - pred_newton):.4f}")
         print(f"  {'Factorial':<22} {label:<20} {pf:<12.4f} {abs(pf - pred_factor):.4f}")
-        print("  " + "─" * 68)
 
     print("\nGraphs:")
     plot_main(x_data, y_data, target_rps=600)
+    plot_step_study(x_data, y_data)
     plot_node_study(x_data, y_data)
     plot_error_analysis(x_data, y_data)
-    plot_step_study(x_data, y_data)
 
     print("\nRunge:")
     write_extended_csv(x_data, y_data, OUT)
@@ -377,7 +364,6 @@ def main():
 
     print(f"\n  CPU prediction:")
     print(f"  {'Nodes':<10} {'CPU(600)':<14} {'Diff from 5|'}")
-    print("  " + "─" * 40)
     ref = newton_interpolate(x_data, y_data, 600.0)
     for n in [5, 10, 20]:
         xn, yn = generate_extended_data(x_data, y_data, n)
