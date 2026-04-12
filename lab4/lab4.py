@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 def M(t):
     """Функція вологості ґрунту."""
@@ -31,11 +32,15 @@ best_h = None
 best_error = float('inf')
 best_D = None
 
+steps = []
+errors = []
 
 for exp in range(1, 11):
     h = 10 ** (-exp)
+    steps.append(h)
     D = central_diff(M, t0, h)
     error = abs(D - exact)
+    errors.append(error)
     marker = ""
     if error < best_error:
         best_error = error
@@ -43,6 +48,13 @@ for exp in range(1, 11):
         best_D = D
         marker = "  <- оптимальний" if exp >= 5 else ""
     print(f"  {h:>12.0e}  {D:>12.6f}  {error:>12.2e}{marker}")
+
+plt.figure()
+plt.xscale("log")
+plt.yscale("log")
+plt.scatter(steps, errors)
+plt.plot(steps, errors)
+plt.show()
 
 print(f"\n  Оптимальний крок: h_opt = {best_h:.0e}")
 print(f"  Найкраща точність: {best_error:.2e}")
