@@ -7,7 +7,6 @@ MAX_ITER = 50
 
 def generate_and_save(n, x_val, file_a="matrix_A.txt", file_b="vector_B.txt"):
     rng = np.random.default_rng(42)
-    # Елементи з [-1, 1], діагональ = n (строге домінування)
     A = rng.uniform(-1.0, 1.0, (n, n))
     np.fill_diagonal(A, n)
 
@@ -106,23 +105,18 @@ if __name__ == "__main__":
     print("  Лабораторна робота №7: LU-розклад та ітераційне уточнення")
     print(sep)
 
-    # 1. Генерація та збереження
     A, b = generate_and_save(N, X_TRUE)
 
-    # 2. Зчитування з файлів
     A = read_matrix("matrix_A.txt")
     b = read_vector("vector_B.txt")
 
-    # 3. LU-розклад
     print("\n[LU] Виконання LU-розкладу (метод Дулітла)...")
     L, U = lu_decompose(A)
     save_lu(L, U)
 
-    # Верифікація: ||A - L*U|| ~ 0
     err_lu = vec_norm(A - L @ U)
     print(f"[LU] Верифікація  ||A - L*U|| = {err_lu:.3e}")
 
-    # 4. Розв'язок через LU
     print("\n[SOLVE] Розв'язок системи AX = B через LU-розклад...")
     x0 = solve_lu(L, U, b)
 
@@ -131,24 +125,12 @@ if __name__ == "__main__":
     print(f"[SOLVE] Нев'язка  ||AX-B||  = {eps_init:.6e}")
     print(f"[SOLVE] Похибка   ||X-X*||  = {err_exact:.6e}")
 
-    # 5. Ітераційне уточнення
     print(f"\n[ITER] Ітераційне уточнення (eps = {EPS_REFINE:.0e}):")
     x_ref, iters = iterative_refinement(A, L, U, b, x0,
                                          eps=EPS_REFINE, max_iter=MAX_ITER)
 
     eps_final = vec_norm(b - mat_vec(A, x_ref))
     err_final = vec_norm(x_ref - X_TRUE)
-
-    print(f"\n{sep}")
-    print("  ПІДСУМОК")
-    print(sep)
-    print(f"  Верифікація LU:  ||A - L*U||     = {err_lu:.3e}")
-    print(f"  Початкова нев'язка  ||AX-B||     = {eps_init:.6e}")
-    print(f"  Фінальна  нев'язка  ||AX-B||     = {eps_final:.6e}")
-    print(f"  Початкова похибка   ||X-X*||     = {err_exact:.6e}")
-    print(f"  Фінальна  похибка   ||X-X*||     = {err_final:.6e}")
-    print(f"  Кількість ітерацій уточнення     = {iters}")
-    print(sep)
 
     print("\nПерші 5 компонент уточненого розв'язку:")
     for i in range(5):

@@ -1,135 +1,140 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from math import erf, sqrt, pi as math_pi
 
-def M(t):
-    """Вологість ґрунту: M(t) = 50*e^(-0.1t) + 5*sin(t)"""
-    return 50 * np.exp(-0.1 * t) + 5 * np.sin(t)
+def f(x):
+    return 50 + 20 * np.sin(np.pi * x / 12) + 5 * np.exp(-0.2 * (x - 12)**2)
 
-def dM_exact(t):
-    """Точна похідна: M'(t) = -5*e^(-0.1t) + 5*cos(t)"""
-    return -5 * np.exp(-0.1 * t) + 5 * np.cos(t)
+a, b = 0, 24
 
-t0 = 1.0
-exact = dM_exact(t0)
-print("=" * 55)
-print("1. АНАЛІТИЧНЕ ДИФЕРЕНЦІЮВАННЯ")
-print("=" * 55)
-print(f"   M(t)  = 50·e^(-0.1t) + 5·sin(t)")
-print(f"   M'(t) = -5·e^(-0.1t) + 5·cos(t)")
-print(f"   M'({t0}) = {exact:.6f}")
+def exact_integral(a, b):
+    def F(x):
+        t1 = 50 * x
+        t2 = -(240 / math_pi) * np.cos(math_pi * x / 12)
+        coeff = 5 * sqrt(math_pi / 0.2) / 2   # = 5·√(5π)/2
+        t3 = coeff * erf(sqrt(0.2) * (x - 12))
+        return t1 + t2 + t3
+    return F(b) - F(a)
 
-
-def central_diff(t, h):
-    """Центральна різниця: (M(t+h) - M(t-h)) / (2h)"""
-    return (M(t + h) - M(t - h)) / (2 * h)
-
-print("\n" + "=" * 55)
-print("2. ЧИСЕЛЬНЕ ДИФЕРЕНЦІЮВАННЯ — ЗАЛЕЖНІСТЬ ВІД КРОКУ")
-print("=" * 55)
-print(f"   {'h':>12}  {'D(h)':>12}  {'|похибка|':>12}")
-print("   " + "-" * 40)
-
-steps = [10**(-k) for k in range(1, 9)]
-errors = []
-for h in steps:
-    d = central_diff(t0, h)
-    err = abs(d - exact)
-    errors.append(err)
-    print(f"   {h:>12.1e}  {d:>12.7f}  {err:>12.2e}")
-
-opt_idx = np.argmin(errors)
-h_opt = steps[opt_idx]
-D_opt = central_diff(t0, h_opt)
-print(f"\n   Оптимальний крок: h_opt = {h_opt:.1e}")
-print(f"   D(h_opt) = {D_opt:.7f},  похибка = {errors[opt_idx]:.2e}")
+I0 = exact_integral(a, b)
+print(f"Точне значення інтегралу I0 = {I0:.10f}")
 
 
-print("\n" + "=" * 55)
-print("3-5. ОБЧИСЛЕННЯ З ДВОМА КРОКАМИ")
-print("=" * 55)
+def simpson(f, a, b, N):
+    if N % 2 != 0:
+        N += 1
+    h = (b - a) / N
+    x = np.linspace(a, b, N + 1)
+    fx = f(x)
+    result = fx[0] + fx[-1]
+    result += 4 * np.sum(fx[1:-1:2])
+    result += 2 * np.sum(fx[2:-2:2])
+    return result * h / 3
 
-h1 = 0.01
-h2 = h1 / 2
+N_values = range(10, 1001, 2)
+errors = [abs(simpson(f, a, b, N) - I0) for N in N_values]
 
-D1 = central_diff(t0, h1)
-D2 = central_diff(t0, h2)
-err1 = abs(D1 - exact)
-err2 = abs(D2 - exact)
-
-print(f"   h  = {h1}  →  D1 = {D1:.7f},  похибка = {err1:.2e}")
-print(f"   h/2= {h2}  →  D2 = {D2:.7f},  похибка = {err2:.2e}")
-
-
-print("\n" + "=" * 55)
-print("6. МЕТОД РУНГЕ-РОМБЕРГА")
-print("=" * 55)
-
-p = 2
-D_RR = D2 + (D2 - D1) / (2**p - 1)
-err_RR = abs(D_RR - exact)
-
-print(f"   Формула: D* = D2 + (D2 - D1) / (2^p - 1), p = {p}")
-print(f"   D_RR = {D_RR:.7f}")
-print(f"   Похибка RR = {err_RR:.2e}  (зменшилась у {err1/err_RR:.1f} разів)")
-
-
-print("\n" + "=" * 55)
-print("7. МЕТОД ЕЙТКЕНА")
-print("=" * 55)
-
-h3 = h2 / 2
-D3 = central_diff(t0, h3)
-err3 = abs(D3 - exact)
-print(f"   h/4 = {h3}  →  D3 = {D3:.7f},  похибка = {err3:.2e}")
-
-
-numerator   = np.log(abs((D3 - D2) / (D2 - D1)))
-denominator = np.log(h3 / h2)
-p_est = numerator / denominator
-print(f"\n   Оцінка порядку точності: p ≈ {p_est:.2f}")
-
-denom_aitken = D3 - 2*D2 + D1
-if abs(denom_aitken) > 1e-15:
-    D_Aitken = D1 - (D2 - D1)**2 / denom_aitken
-else:
-    D_Aitken = D_RR
-err_Aitken = abs(D_Aitken - exact)
-
-print(f"\n   D_Aitken = {D_Aitken:.7f}")
-print(f"   Похибка Ейткена = {err_Aitken:.2e}  (зменшилась у {err1/err_Aitken:.1f} разів)")
-
-print("\n" + "=" * 55)
-print("ПІДСУМКОВА ТАБЛИЦЯ")
-print("=" * 55)
-print(f"   {'Метод':<28} {'Значення':>10} {'Похибка':>10}")
-print("   " + "-" * 52)
-print(f"   {'Точне значення':<28} {exact:>10.7f} {'—':>10}")
-print(f"   {'Центральна різниця h=0.01':<28} {D1:>10.7f} {err1:>10.2e}")
-print(f"   {'Центральна різниця h=0.005':<28} {D2:>10.7f} {err2:>10.2e}")
-print(f"   {'Рунге-Ромберг':<28} {D_RR:>10.7f} {err_RR:>10.2e}")
-print(f"   {'Ейткен':<28} {D_Aitken:>10.7f} {err_Aitken:>10.2e}")
-
-fig, axes = plt.subplots(1, 2, figsize=(12, 5))
-
-axes[0].loglog(steps, errors, 'o-', color='#1D9E75', linewidth=2, markersize=6)
-axes[0].axvline(h_opt, color='#D85A30', linestyle='--', label=f'h_opt={h_opt:.0e}')
-axes[0].set_xlabel('Крок h')
-axes[0].set_ylabel('|Похибка|')
-axes[0].set_title('Похибка чисельного диференціювання від кроку h')
-axes[0].legend()
-axes[0].grid(True, which='both', alpha=0.3)
-
-methods = ['Центр. різн.\nh=0.01', 'Центр. різн.\nh=0.005', 'Рунге-\nРомберг', 'Ейткен']
-errs    = [err1, err2, err_RR, err_Aitken]
-colors  = ['#378ADD', '#1D9E75', '#D85A30', '#7F77DD']
-bars = axes[1].bar(methods, errs, color=colors, edgecolor='none')
-axes[1].set_yscale('log')
-axes[1].set_ylabel('|Похибка| (log шкала)')
-axes[1].set_title('Порівняння похибок методів')
-for bar, err in zip(bars, errs):
-    axes[1].text(bar.get_x() + bar.get_width()/2, err * 1.3,
-                 f'{err:.1e}', ha='center', va='bottom', fontsize=10)
-axes[1].grid(True, axis='y', alpha=0.3)
-
+plt.figure(figsize=(10, 5))
+plt.semilogy(list(N_values), errors)
+plt.xlabel('N (кількість розбиттів)')
+plt.ylabel('ε(N) = |I(N) - I₀|')
+plt.title('Залежність похибки формули Сімпсона від N')
+plt.grid(True, which='both')
 plt.tight_layout()
 plt.show()
+
+
+target_eps = 1e-12
+N_opt = None
+for N in range(10, 10001, 2):
+    if abs(simpson(f, a, b, N) - I0) <= target_eps:
+        N_opt = N
+        break
+
+if N_opt is None:
+    N_opt = 1000
+    print("Увага: точність 1e-12 не досягнута при N<=10000, використовуємо N=1000")
+
+eps_opt = abs(simpson(f, a, b, N_opt) - I0)
+print(f"\nN_opt = {N_opt}  (перше N при якому ε ≤ 1e-12)")
+print(f"epsopt = |I(N_opt) - I0| = {eps_opt:.2e}")
+
+N0_raw = N_opt // 10
+N0 = max(8, (N0_raw // 8) * 8)
+if N0 < 8:
+    N0 = 8
+if N0 < 16:
+    N0 = 16
+
+I_N0 = simpson(f, a, b, N0)
+eps0 = abs(I_N0 - I0)
+print(f"\nN0 = {N0}")
+print(f"I(N0) = {I_N0:.10f}")
+print(f"eps0 = |I(N0) - I0| = {eps0:.2e}")
+
+I_N0_half = simpson(f, a, b, N0 // 2)
+
+p = 4
+I_R = I_N0 + (I_N0 - I_N0_half) / (2**p - 1)
+epsR = abs(I_R - I0)
+print(f"\n--- Метод Рунге-Ромберга ---")
+print(f"I(N0/2)  = {I_N0_half:.10f}")
+print(f"I(N0)    = {I_N0:.10f}")
+print(f"I_R      = {I_R:.10f}")
+print(f"epsR = |I_R - I0| = {epsR:.2e}")
+
+h1 = (b - a) / N0
+h2 = h1 / 2
+h3 = h1 / 4
+
+N1 = N0
+N2 = N0 * 2
+N3 = N0 * 4
+
+I1 = simpson(f, a, b, N1)
+I2 = simpson(f, a, b, N2)
+I3 = simpson(f, a, b, N3)
+
+log_ratio = np.log((I1 - I2) / (I2 - I3)) / np.log(2)
+p_aitken = log_ratio
+print(f"\n--- Метод Ейткена ---")
+print(f"I(N0)    = {I1:.10f}")
+print(f"I(2*N0)  = {I2:.10f}")
+print(f"I(4*N0)  = {I3:.10f}")
+print(f"Оцінка порядку p = {p_aitken:.4f}")
+
+q = 2**p_aitken
+I_A = I3 + (I3 - I2) / (q - 1)
+epsA = abs(I_A - I0)
+print(f"I_Aitken = {I_A:.10f}")
+print(f"epsA = |I_A - I0| = {epsA:.2e}")
+
+def adaptive_simpson(f, a, b, tol, depth=0, max_depth=50):
+    c = (a + b) / 2
+    h = b - a
+
+    fa, fc, fb = f(a), f(c), f(b)
+    S1 = h / 6 * (fa + 4*fc + fb)
+
+    d1, d2 = (a + c) / 2, (c + b) / 2
+    fd1, fd2 = f(d1), f(d2)
+    S2 = h / 12 * (fa + 4*fd1 + fc) + h / 12 * (fc + 4*fd2 + fb)
+
+    if depth >= max_depth or abs(S2 - S1) < 15 * tol:
+        return S2 + (S2 - S1) / 15
+    else:
+        left  = adaptive_simpson(f, a, c, tol/2, depth+1, max_depth)
+        right = adaptive_simpson(f, c, b, tol/2, depth+1, max_depth)
+        return left + right
+
+print(f"\n--- Адаптивний алгоритм ---")
+call_counter = [0]
+def f_counted(x):
+    call_counter[0] += 1
+    return f(x)
+
+for tol in [1e-4, 1e-6, 1e-8, 1e-10]:
+    call_counter[0] = 0
+    I_adapt = adaptive_simpson(f_counted, a, b, tol)
+    eps_adapt = abs(I_adapt - I0)
+    print(f"tol={tol:.0e}  I={I_adapt:.8f}  похибка={eps_adapt:.2e}  викликів f={call_counter[0]}")

@@ -2,15 +2,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 def M(t):
-    """Функція вологості ґрунту."""
     return 50 * np.exp(-0.1 * t) + 5 * np.sin(t)
 
 def M_exact_derivative(t):
-    """Аналітична перша похідна M'(t) = -5*e^(-0.1*t) + 5*cos(t)."""
     return -5 * np.exp(-0.1 * t) + 5 * np.cos(t)
 
 def central_diff(f, t, h):
-    """Центральна різницева формула: (f(t+h) - f(t-h)) / (2h)."""
     return (f(t + h) - f(t - h)) / (2 * h)
 
 
@@ -52,6 +49,9 @@ for exp in range(1, 11):
 plt.figure()
 plt.xscale("log")
 plt.yscale("log")
+plt.xlabel("Крок")
+plt.ylabel("Похибка")
+plt.grid(True, "both", "both")
 plt.scatter(steps, errors)
 plt.plot(steps, errors)
 plt.show()
@@ -115,13 +115,3 @@ print(f"\n  D_Ейткен = {D_aitken:.8f}")
 print(f"  Точне    = {exact:.8f}")
 print(f"  Похибка  = {err_aitken:.2e}  (було {abs(D_a - exact):.2e})")
 print(f"  Покращення у {abs(D_a - exact)/err_aitken:.1f} разів")
-
-print("ПІДСУМОК")
-
-print(f"\n  {'Метод':<30}  {'Значення':>12}  {'Похибка':>12}")
-print(f"  {'-'*30}  {'-'*12}  {'-'*12}")
-print(f"  {'Точне (аналітичне)':<30}  {exact:>12.7f}  {'—':>12}")
-print(f"  {'Центр. різниця h=0.01':<30}  {D_h1:>12.7f}  {err_h1:>12.2e}")
-print(f"  {'Центр. різниця h=0.005':<30}  {D_h2:>12.7f}  {err_h2:>12.2e}")
-print(f"  {'Рунге-Ромберг':<30}  {D_RR:>12.7f}  {err_RR:>12.2e}")
-print(f"  {'Ейткен':<30}  {D_aitken:>12.7f}  {err_aitken:>12.2e}")
