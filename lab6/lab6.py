@@ -101,10 +101,6 @@ def iterative_refinement(A, L, U, b, x0, eps=EPS_REFINE, max_iter=MAX_ITER):
 
 if __name__ == "__main__":
     sep = "=" * 62
-    print(sep)
-    print("  Лабораторна робота №7: LU-розклад та ітераційне уточнення")
-    print(sep)
-
     A, b = generate_and_save(N, X_TRUE)
 
     A = read_matrix("matrix_A.txt")

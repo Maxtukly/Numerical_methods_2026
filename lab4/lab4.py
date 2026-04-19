@@ -86,7 +86,7 @@ print(f"\n  Формула: D_RR = D(h/2) + (D(h/2) - D(h)) / (2^p - 1)")
 print(f"  p = {p}  ->  2^p - 1 = {q**p - 1}")
 print(f"\n  D_RR    = {D_RR:.7f}")
 print(f"  Точне   = {exact:.7f}")
-print(f"  Похибка = {err_RR:.2e}  (було {err_h2:.2e})")
+print(f"  Похибка = {err_RR:.2e}")
 print(f"  Покращення у {err_h2/err_RR:.1f} разів")
 
 print("7. Метод Ейткена")
