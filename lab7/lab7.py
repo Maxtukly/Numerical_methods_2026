@@ -50,8 +50,7 @@ def simple_iteration(
     b: np.ndarray,
     x0: np.ndarray,
     eps: float = 1e-14,
-    max_iter: int = 100_000,
-) -> tuple[np.ndarray, int]:
+    max_iter: int = 100_000,) -> tuple[np.ndarray, int]:
     eigenvalues = np.linalg.eigvalsh(A)
     lam_min, lam_max = eigenvalues.min(), eigenvalues.max()
     tau = 2.0 / (lam_min + lam_max)
@@ -70,9 +69,7 @@ def jacobi(
     b: np.ndarray,
     x0: np.ndarray,
     eps: float = 1e-14,
-    max_iter: int = 100_000,
-) -> tuple[np.ndarray, int]:
-    n = len(b)
+    max_iter: int = 100_000,) -> tuple[np.ndarray, int]:
     d = np.diag(A)
     R = A - np.diag(d)
 
@@ -90,8 +87,7 @@ def seidel(
     b: np.ndarray,
     x0: np.ndarray,
     eps: float = 1e-14,
-    max_iter: int = 100_000,
-) -> tuple[np.ndarray, int]:
+    max_iter: int = 100_000,) -> tuple[np.ndarray, int]:
     n = len(b)
     x = x0.copy()
     for k in range(1, max_iter + 1):
@@ -107,56 +103,52 @@ def seidel(
         x = x_new
     return x, max_iter
 
-if __name__ == "__main__":
-    N = 100
-    EPS = 1e-14
 
-    print("\n[1] Генерація матриці A та вектора b")
-    A = generate_matrix(N)
-    x_exact = np.full(N, 2.5)
-    b = compute_b(A, x_exact)
+N = 100
+EPS = 1e-14
 
-    save_matrix(A, "matrix_A.txt")
-    save_vector(b, "vector_b.txt")
 
-    print("\n[2] Зчитування матриці та вектора з файлів")
-    A = load_matrix("matrix_A.txt")
-    b = load_vector("vector_b.txt")
+A = generate_matrix(N)
+x_exact = np.full(N, 2.5)
+b = compute_b(A, x_exact)
 
-    x0 = np.array([1.0 * (1 + i) for i in range(N)])
-    print(f"\n[3] Початкове наближення x0: x_i = 1.0*(1+i), i=0..{N - 1}")
+save_matrix(A, "matrix_A.txt")
+save_vector(b, "vector_b.txt")
 
-    print(f"\n[4] Розв'язок СЛАР (n={N}, eps={EPS:.0e})\n")
+A = load_matrix("matrix_A.txt")
+b = load_vector("vector_b.txt")
 
-    results = {}
+x0 = np.array([1.0 * (1 + i) for i in range(N)])
 
-    x_si, iters_si = simple_iteration(A, b, x0, eps=EPS)
-    err_si = vector_norm(x_si - x_exact)
-    res_si = residual_norm(A, x_si, b)
-    results["Проста ітерація"] = (x_si, iters_si, err_si, res_si)
+results = {}
 
-    x_jac, iters_jac = jacobi(A, b, x0, eps=EPS)
-    err_jac = vector_norm(x_jac - x_exact)
-    res_jac = residual_norm(A, x_jac, b)
-    results["Якобі"] = (x_jac, iters_jac, err_jac, res_jac)
+x_si, iters_si = simple_iteration(A, b, x0, eps=EPS)
+err_si = vector_norm(x_si - x_exact)
+res_si = residual_norm(A, x_si, b)
+results["Проста ітерація"] = (x_si, iters_si, err_si, res_si)
 
-    x_sei, iters_sei = seidel(A, b, x0, eps=EPS)
-    err_sei = vector_norm(x_sei - x_exact)
-    res_sei = residual_norm(A, x_sei, b)
-    results["Зейдель"] = (x_sei, iters_sei, err_sei, res_sei)
+x_jac, iters_jac = jacobi(A, b, x0, eps=EPS)
+err_jac = vector_norm(x_jac - x_exact)
+res_jac = residual_norm(A, x_jac, b)
+results["Якобі"] = (x_jac, iters_jac, err_jac, res_jac)
 
-    print(f"{'Метод':<20} {'Ітерацій':>10} {'‖x−x*‖':>14} {'‖Ax−b‖':>14}")
-    print("-" * 72)
-    for name, (_, iters, err, res) in results.items():
-        print(f"{name:<20} {iters:>10} {err:>14.4e} {res:>14.4e} ")
+x_sei, iters_sei = seidel(A, b, x0, eps=EPS)
+err_sei = vector_norm(x_sei - x_exact)
+res_sei = residual_norm(A, x_sei, b)
+results["Зейдель"] = (x_sei, iters_sei, err_sei, res_sei)
 
-    print("\nПерші 5 компонент розв'язку (точний = 2.5):")
-    print(f"{'Метод':<20}", end="")
+print(f"{'Метод':<20} {'Ітерацій':>10} {'‖x−x*‖':>14} {'‖Ax−b‖':>14}")
+print("-" * 72)
+for name, (_, iters, err, res) in results.items():
+    print(f"{name:<20} {iters:>10} {err:>14.4e} {res:>14.4e} ")
+
+print("\nПерші 5 компонент розв'язку (точний = 2.5):")
+print(f"{'Метод':<20}", end="")
+for j in range(5):
+    print(f"  x[{j}]", end="")
+print()
+for name, (x, *_) in results.items():
+    print(f"{name:<20}", end="")
     for j in range(5):
-        print(f"  x[{j}]", end="")
+        print(f"  {x[j]:.14f}", end="")
     print()
-    for name, (x, *_) in results.items():
-        print(f"{name:<20}", end="")
-        for j in range(5):
-            print(f"  {x[j]:.14f}", end="")
-        print()

@@ -56,7 +56,7 @@ def forward_substitution(L, b):
 def back_substitution(U, z):
     n = len(z)
     x = np.zeros(n)
-    x[n-1] = z[n-1]          # u_{n-1,n-1} = 1
+    x[n-1] = z[n-1]
     for k in range(n-2, -1, -1):
         x[k] = z[k] - U[k, k+1:] @ x[k+1:]
     return x
@@ -86,7 +86,7 @@ def iterative_refinement(A, L, U, b, x0, eps=EPS_REFINE, max_iter=MAX_ITER):
 
         print(f"  Ітерація {it:3d}:  ||dX|| = {err_x:.3e}   ||AX-B|| = {err_ax:.3e}")
 
-        if err_x <= eps:
+        if (err_x <= eps) and (err_ax <= eps):
             print(f"\n[ITER] Збіжність досягнута за {it} ітерацій.")
             return x, it
 
@@ -99,35 +99,36 @@ def iterative_refinement(A, L, U, b, x0, eps=EPS_REFINE, max_iter=MAX_ITER):
     print(f"\n[ITER] Досягнуто максимум ітерацій ({max_iter}).")
     return x, max_iter
 
-if __name__ == "__main__":
-    sep = "=" * 62
-    A, b = generate_and_save(N, X_TRUE)
+A, b = generate_and_save(N, X_TRUE)
 
-    A = read_matrix("matrix_A.txt")
-    b = read_vector("vector_B.txt")
+A = read_matrix("matrix_A.txt")
+b = read_vector("vector_B.txt")
 
-    print("\n[LU] Виконання LU-розкладу (метод Дулітла)...")
-    L, U = lu_decompose(A)
-    save_lu(L, U)
+print("\n[LU] Виконання LU-розкладу")
+L, U = lu_decompose(A)
+save_lu(L, U)
 
-    err_lu = vec_norm(A - L @ U)
-    print(f"[LU] Верифікація  ||A - L*U|| = {err_lu:.3e}")
+err_lu = vec_norm(A - L @ U)
+print(f"[LU] Верифікація  ||A - L*U|| = {err_lu:.3e}")
 
-    print("\n[SOLVE] Розв'язок системи AX = B через LU-розклад...")
-    x0 = solve_lu(L, U, b)
+print("\n[SOLVE] Розв'язок системи AX = B через LU-розклад")
+L = read_matrix("matrix_L.txt")
+U = read_matrix("matrix_U.txt")
 
-    eps_init  = vec_norm(b - mat_vec(A, x0))
-    err_exact = vec_norm(x0 - X_TRUE)
-    print(f"[SOLVE] Нев'язка  ||AX-B||  = {eps_init:.6e}")
-    print(f"[SOLVE] Похибка   ||X-X*||  = {err_exact:.6e}")
+x0 = solve_lu(L, U, b)
 
-    print(f"\n[ITER] Ітераційне уточнення (eps = {EPS_REFINE:.0e}):")
-    x_ref, iters = iterative_refinement(A, L, U, b, x0,
-                                         eps=EPS_REFINE, max_iter=MAX_ITER)
+eps_init  = vec_norm(b - mat_vec(A, x0))
+err_exact = vec_norm(x0 - X_TRUE)
+print(f"[SOLVE] Нев'язка  ||AX-B||  = {eps_init:.6e}")
+print(f"[SOLVE] Похибка   ||X-X*||  = {err_exact:.6e}")
 
-    eps_final = vec_norm(b - mat_vec(A, x_ref))
-    err_final = vec_norm(x_ref - X_TRUE)
+print(f"\n[ITER] Ітераційне уточнення (eps = {EPS_REFINE:.0e}):")
+x_ref, iters = iterative_refinement(A, L, U, b, x0,
+                                     eps=EPS_REFINE, max_iter=MAX_ITER)
 
-    print("\nПерші 5 компонент уточненого розв'язку:")
-    for i in range(5):
-        print(f"  x[{i+1}] = {x_ref[i]:.15f}  (еталон {X_TRUE})")
+eps_final = vec_norm(b - mat_vec(A, x_ref))
+err_final = vec_norm(x_ref - X_TRUE)
+
+print("\nПерші 5 компонент уточненого розв'язку:")
+for i in range(5):
+    print(f"  x[{i+1}] = {x_ref[i]:.15f}  (еталон {X_TRUE})")
