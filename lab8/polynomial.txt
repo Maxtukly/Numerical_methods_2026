@@ -1,0 +1,3 @@
+# Polynomial coefficients (highest degree first)
+# p(x) = a_n*x^n + ... + a_1*x + a_0
+1 -1 4 -6
